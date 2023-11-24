@@ -65,57 +65,60 @@ int main()
     Once the server starts listening, it will keep on waiting for a connection, thus a blocking call.
     The accept() will accept the connection and return a new socket descriptor for that connection.
     */
-    int client_fd;
-    client_fd = accept(socket_fd, NULL, NULL);
-    if (client_fd < 0)
+    while (1)
     {
-        perror("server: error while accepting the connection\n");
-        exit(1);
+        int client_fd;
+        client_fd = accept(socket_fd, NULL, NULL);
+        if (client_fd < 0)
+        {
+            perror("server: error while accepting the connection\n");
+            exit(1);
+        }
+
+        printf("server: Connected with a client\n");
+
+        /* ### Read the connection
+        The read() system call reads the file descriptor and saves the value in the buffer that is passed to it.
+        */
+        int bytes_read;
+        char request_buf[1024];
+        bytes_read = read(client_fd, request_buf, sizeof(request_buf));
+        if (bytes_read < 0)
+        {
+            perror("server: error while reading the request data\n");
+            exit(1);
+        }
+
+        printf("server: Request Data:\n%s\n", request_buf);
+
+        /* ### Parse the request data and handle the business logic
+        Here, we add all our routing and business logic
+
+        For now, I will add a simple hello world response for each request to the server
+        */
+        char response_buf[1024];
+        strcpy(response_buf, "HTTP/1.1 200 OK\r\n");
+        strcat(response_buf, "Content-Type: text/html\r\n");
+        strcat(response_buf, "\r\n");
+        strcat(response_buf, "<h1>Hello, world!</h1>");
+
+        /* ### Write back the response to the client
+        The write() system call writes the response buffer to the file descriptor.
+        */
+        int bytes_written;
+        bytes_written = write(client_fd, response_buf, strlen(response_buf));
+        if (bytes_written < 0)
+        {
+            perror("server: error while writing the response data\n");
+            exit(1);
+        }
+
+        printf("server: Successfully written to client\n");
+
+        /* ### Close the connection
+        We finally close the connection after writing the response back to the client.
+        */
+        close(client_fd);
     }
-
-    printf("server: Connected with a client\n");
-
-    /* ### Read the connection
-    The read() system call reads the file descriptor and saves the value in the buffer that is passed to it.
-    */
-    int bytes_read;
-    char request_buf[1024];
-    bytes_read = read(client_fd, request_buf, sizeof(request_buf));
-    if (bytes_read < 0)
-    {
-        perror("server: error while reading the request data\n");
-        exit(1);
-    }
-
-    printf("server: Request Data:\n%s\n", request_buf);
-
-    /* ### Parse the request data and handle the business logic
-    Here, we add all our routing and business logic
-
-    For now, I will add a simple hello world response for each request to the server
-    */
-    char response_buf[1024];
-    strcpy(response_buf, "HTTP/1.1 200 OK\r\n");
-    strcat(response_buf, "Content-Type: text/html\r\n");
-    strcat(response_buf, "\r\n");
-    strcat(response_buf, "<h1>Hello, world!</h1>");
-
-    /* ### Write back the response to the client
-    The write() system call writes the response buffer to the file descriptor.
-    */
-    int bytes_written;
-    bytes_written = write(client_fd, response_buf, strlen(response_buf));
-    if (bytes_written < 0)
-    {
-        perror("server: error while writing the response data\n");
-        exit(1);
-    }
-
-    printf("server: Successfully written to client\n");
-
-    /* ### Close the connection
-    We finally close the connection after writing the response back to the client.
-    */
-    close(client_fd);
     close(socket_fd);
 }

@@ -8,7 +8,7 @@ This document provides a brief overview of the web server, how to compile and ru
 ## Overview
 I made this project to learn more about how web servers work. It is not intended for real-world use.
 
-The web server is a simple, single-threaded server written in C. It uses the TCP/IP protocol for communication and listens on port 80. The server can handle a maximum of 5 queued connections before it starts dropping new incoming connections.
+The web server is a simple, single-threaded blocking web server written in C. It uses the TCP/IP protocol for communication and listens on port 80. The server can handle a maximum of 5 queued connections before it starts dropping new incoming connections.
 
 ## Compilation
 To compile the server, you need a C compiler such as gcc. Use the following command to compile the server:
