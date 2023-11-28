@@ -12,11 +12,13 @@
 
 /*  This function takes the client fd as an argument.
     It handles all the connection operations like reading, writing and closing the connection.
-    @param client_fd [int] The client file descriptor which represents a connection.
+    @param arg (void*) The client file descriptor which represents a connection as a void* pointer.
     @returns NULL
 */
-void *process_client(int client_fd)
+void *process_client(void *arg)
 {
+    int client_fd = *((int *)arg);
+
     /*  ### Read the connection
         The read() system call reads the file descriptor and saves the value in the buffer that is passed to it.
     */
@@ -62,6 +64,7 @@ void *process_client(int client_fd)
         We finally close the connection after writing the response back to the client.
     */
     close(client_fd);
+    free(arg);
     return NULL;
 }
 
@@ -122,15 +125,17 @@ int main()
 
     printf("server: Waiting for connections on port %i\n", PORT);
 
-    /*  ### Accept the connection
-        Once the server starts listening, it will keep on waiting for a connection, thus a blocking call.
-        The accept() will accept the connection and return a new socket descriptor for that connection.
-    */
     while (1)
     {
-        int client_fd;
-        client_fd = accept(socket_fd, NULL, NULL);
-        if (client_fd < 0)
+        /* Dynamically Allocate memory to client fd else it will cause error when passing it from pthread */
+        int *client_fd = malloc(sizeof(int));
+
+        /*  ### Accept the connection
+            Once the server starts listening, it will keep on waiting for a connection, thus a blocking call.
+            The accept() will accept the connection and return a new socket descriptor for that connection.
+        */
+        *client_fd = accept(socket_fd, NULL, NULL);
+        if (*client_fd < 0)
         {
             perror("server: error while accepting the connection\n");
             exit(EXIT_STATUS);
@@ -138,7 +143,9 @@ int main()
 
         printf("server: Connected with a client\n");
 
-        process_client(client_fd);
+        pthread_t thread_id;
+        pthread_create(&thread_id, NULL, process_client, client_fd);
+        pthread_detach(thread_id);
     }
     close(socket_fd);
 }
